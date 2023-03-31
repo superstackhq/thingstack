@@ -2,9 +2,13 @@ package one.superstack.thingstack.enums;
 
 public enum TargetType {
 
+    THING_TYPE,
+
     THING,
 
-    HOOK,
+    MESSAGE_HOOK,
+
+    WEB_HOOK,
 
     RULE
 }

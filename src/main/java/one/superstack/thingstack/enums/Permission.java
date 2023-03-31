@@ -2,5 +2,11 @@ package one.superstack.thingstack.enums;
 
 public enum Permission {
 
-    ALL
+    ALL,
+
+    CREATE,
+
+    UPDATE,
+
+    DELETE
 }

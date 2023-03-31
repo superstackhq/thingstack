@@ -7,6 +7,8 @@ import one.superstack.thingstack.auth.actor.Jwt;
 import one.superstack.thingstack.auth.actor.RequiresAuthentication;
 import one.superstack.thingstack.auth.actor.ThreadLocalWrapper;
 import one.superstack.thingstack.exception.InvalidTokenException;
+import one.superstack.thingstack.exception.ServerException;
+import one.superstack.thingstack.service.ApiKeyService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.web.method.HandlerMethod;
@@ -17,20 +19,23 @@ public class AuthInterceptor implements HandlerInterceptor {
 
     private final Jwt jwt;
 
+    private final ApiKeyService apiKeyService;
+
     private static final String BEARER_PREFIX = "Bearer";
     private static final String API_KEY_PREFIX = "ApiKey";
     private static final String APP_KEY_PREFIX = "AppKey";
 
     @Autowired
-    public AuthInterceptor(Jwt jwt) {
+    public AuthInterceptor(Jwt jwt, ApiKeyService apiKeyService) {
         this.jwt = jwt;
+        this.apiKeyService = apiKeyService;
     }
 
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) {
         if (handler instanceof HandlerMethod) {
             Object handlerBean = ((HandlerMethod) handler).getBean();
 
-if (handlerBean instanceof RequiresAuthentication) {
+            if (handlerBean instanceof RequiresAuthentication) {
                 AuthorizationHeader header = extractAuthorizationData(request);
                 AuthenticatedActor actor = getActor(header);
                 ThreadLocalWrapper.setActor(actor);
@@ -43,14 +48,26 @@ if (handlerBean instanceof RequiresAuthentication) {
     private AuthenticatedActor getActor(AuthorizationHeader header) {
         AuthenticatedActor actor;
 
-        if (header.getType().equals(BEARER_PREFIX)) {
-            String jwtToken = header.getContent();
-            actor = jwt.getActor(jwtToken);
-            if (null == actor) {
-                throw new InvalidTokenException();
+        switch (header.getType()) {
+            case BEARER_PREFIX -> {
+                String jwtToken = header.getContent();
+                actor = jwt.getActor(jwtToken);
+                if (null == actor) {
+                    throw new InvalidTokenException();
+                }
             }
-        } else {
-            throw new InvalidTokenException();
+
+            case API_KEY_PREFIX -> {
+                String apiKey = header.getContent();
+                try {
+                    actor = apiKeyService.getByAccessKey(apiKey);
+                } catch (Throwable e) {
+                    throw new ServerException(e.getMessage());
+                }
+                ThreadLocalWrapper.setActor(actor);
+            }
+
+            default -> throw new InvalidTokenException();
         }
 
         return actor;

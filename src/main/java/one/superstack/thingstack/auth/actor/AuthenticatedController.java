@@ -1,7 +1,10 @@
 package one.superstack.thingstack.auth.actor;
 
 import one.superstack.thingstack.enums.ActorType;
+import one.superstack.thingstack.enums.Permission;
+import one.superstack.thingstack.enums.TargetType;
 import one.superstack.thingstack.exception.NotAllowedException;
+import one.superstack.thingstack.service.AccessService;
 
 public class AuthenticatedController extends RequiresAuthentication {
 
@@ -27,6 +30,12 @@ public class AuthenticatedController extends RequiresAuthentication {
 
     public void checkFullAccess() {
         if (!hasFullAccess()) {
+            throw new NotAllowedException();
+        }
+    }
+
+    public void checkAccess(AccessService accessService, TargetType targetType, String targetId, Permission permission) {
+        if (!accessService.hasPermission(targetType, targetId, getActorType(), getActorId(), permission, hasFullAccess())) {
             throw new NotAllowedException();
         }
     }

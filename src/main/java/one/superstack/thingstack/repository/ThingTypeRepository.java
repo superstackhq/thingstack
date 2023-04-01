@@ -1,6 +1,5 @@
 package one.superstack.thingstack.repository;
 
-import one.superstack.thingstack.model.Thing;
 import one.superstack.thingstack.model.ThingType;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.mongodb.repository.MongoRepository;
@@ -17,4 +16,6 @@ public interface ThingTypeRepository extends MongoRepository<ThingType, String> 
     Optional<ThingType> findByIdAndOrganizationId(String id, String organizationId);
 
     Boolean existsByNameAndVersion(String name, String version);
+
+    Boolean existsByIdAndOrganizationId(String id, String organizationId);
 }

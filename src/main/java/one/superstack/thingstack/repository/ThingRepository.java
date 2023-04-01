@@ -14,4 +14,6 @@ public interface ThingRepository extends MongoRepository<Thing, String> {
     Optional<Thing> findByIdAndOrganizationId(String id, String organizationId);
 
     List<Thing> findByTypeIdAndOrganizationId(String typeId, String organizationId, Pageable pageable);
+
+    Boolean existsByIdAndOrganizationId(String id, String organizationId);
 }

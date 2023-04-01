@@ -42,15 +42,18 @@ public class ThingService {
 
     private final AccessService accessService;
 
+    private final NamespaceService namespaceService;
+
     private final MongoTemplate mongoTemplate;
 
     @Autowired
-    public ThingService(ThingRepository thingRepository, ThingTypeService thingTypeService, MqttUserService mqttUserService, MqttAclService mqttAclService, AccessService accessService, MongoTemplate mongoTemplate) {
+    public ThingService(ThingRepository thingRepository, ThingTypeService thingTypeService, MqttUserService mqttUserService, MqttAclService mqttAclService, AccessService accessService, NamespaceService namespaceService, MongoTemplate mongoTemplate) {
         this.thingRepository = thingRepository;
         this.thingTypeService = thingTypeService;
         this.mqttUserService = mqttUserService;
         this.mqttAclService = mqttAclService;
         this.accessService = accessService;
+        this.namespaceService = namespaceService;
         this.mongoTemplate = mongoTemplate;
     }
 
@@ -87,6 +90,10 @@ public class ThingService {
         // Grant full access to the creator
         accessService.add(new AccessRequest(TargetType.THING, thing.getId(), creator.getType(), creator.getId(), Set.of(Permission.ALL)), creator);
 
+        if (null != thing.getNamespace()) {
+            namespaceService.register(thing.getNamespace(), thing.getTypeId(), thing.getOrganizationId());
+        }
+
         return thing;
     }
 
@@ -96,6 +103,11 @@ public class ThingService {
 
     public Thing get(String thingId, String organizationId) throws Throwable {
         return thingRepository.findByIdAndOrganizationId(thingId, organizationId)
+                .orElseThrow((Supplier<Throwable>) () -> new NotFoundException("Thing not found"));
+    }
+
+    public Thing get(String thingId) throws Throwable {
+        return thingRepository.findById(thingId)
                 .orElseThrow((Supplier<Throwable>) () -> new NotFoundException("Thing not found"));
     }
 
@@ -205,6 +217,10 @@ public class ThingService {
         }
 
         mqttAclService.delete(thingId, thingBusCustomTopicRequest.getTopicAccess(), Set.of(thingBusCustomTopicRequest.getTopic()));
+    }
+
+    public Boolean exists(String thingId, String organizationId) {
+        return thingRepository.existsByIdAndOrganizationId(thingId, organizationId);
     }
 
     private void initMqtt(Thing thing) {

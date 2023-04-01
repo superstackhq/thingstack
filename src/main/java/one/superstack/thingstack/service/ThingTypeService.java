@@ -12,11 +12,13 @@ import one.superstack.thingstack.request.ThingTypeCreationRequest;
 import one.superstack.thingstack.request.ThingTypeUpdateRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import java.util.Date;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 import java.util.function.Supplier;
 
 @Service
@@ -33,7 +35,7 @@ public class ThingTypeService {
     }
 
     public ThingType create(ThingTypeCreationRequest thingTypeCreationRequest, AuthenticatedActor creator) {
-        if (exists(thingTypeCreationRequest.getName(), thingTypeCreationRequest.getVersion())) {
+        if (nameExists(thingTypeCreationRequest.getName(), thingTypeCreationRequest.getVersion())) {
             throw new ClientException("Thing type " + thingTypeCreationRequest.getName() + " with version " + thingTypeCreationRequest.getVersion() + " already exists");
         }
 
@@ -61,6 +63,11 @@ public class ThingTypeService {
                 .orElseThrow((Supplier<Throwable>) () -> new NotFoundException("Thing type not found"));
     }
 
+    public ThingType get(String thingTypeId) throws Throwable {
+        return thingTypeRepository.findById(thingTypeId)
+                .orElseThrow((Supplier<Throwable>) () -> new NotFoundException("Thing type not found"));
+    }
+
     public ThingType update(String thingTypeId, ThingTypeUpdateRequest thingTypeUpdateRequest, String organizationId) throws Throwable {
         ThingType thingType = get(thingTypeId, organizationId);
         thingType.setDescription(thingTypeUpdateRequest.getDescription());
@@ -75,7 +82,11 @@ public class ThingTypeService {
         return thingType;
     }
 
-    private Boolean exists(String name, String version) {
+    public Boolean exists(String thingTypeId, String organizationId) {
+        return thingTypeRepository.existsByIdAndOrganizationId(thingTypeId, organizationId);
+    }
+
+    private Boolean nameExists(String name, String version) {
         return thingTypeRepository.existsByNameAndVersion(name, version);
     }
 }

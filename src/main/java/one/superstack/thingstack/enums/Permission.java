@@ -12,5 +12,7 @@ public enum Permission {
 
     MANAGE_ACCESS_KEY,
 
-    MANAGE_BUS
+    MANAGE_BUS,
+
+    CREATE_THING
 }

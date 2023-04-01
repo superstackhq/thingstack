@@ -35,7 +35,7 @@ public class ThingController extends AuthenticatedController {
 
     @PostMapping(value = "/things")
     public Thing create(@Valid @RequestBody ThingCreationRequest thingCreationRequest) throws Throwable {
-        checkAccess(accessService, TargetType.THING, null, Permission.CREATE);
+        checkAccess(accessService, TargetType.THING_TYPE, thingCreationRequest.getTypeId(), Permission.CREATE_THING);
         return thingService.create(thingCreationRequest, getActor());
     }
 

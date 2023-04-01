@@ -6,5 +6,7 @@ public enum HookType {
 
     WEB,
 
-    REMOTE_THING
+    REFLECTION,
+
+    THING
 }

@@ -1,5 +1,6 @@
 package one.superstack.thingstack.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import one.superstack.thingstack.embedded.Bus;
 import one.superstack.thingstack.enums.ActorType;
 import org.springframework.data.annotation.Id;
@@ -23,10 +24,12 @@ public class Thing implements Serializable {
 
     private String description;
 
-
+    @JsonIgnore
     private String accessKey;
 
     private Bus bus;
+
+    private String organizationId;
 
     private ActorType creatorType;
 
@@ -40,13 +43,14 @@ public class Thing implements Serializable {
 
     }
 
-    public Thing(String typeId, List<String> namespace, String name, String description, String accessKey, Bus bus, ActorType creatorType, String creatorId) {
+    public Thing(String typeId, List<String> namespace, String name, String description, String accessKey, Bus bus, String organizationId, ActorType creatorType, String creatorId) {
         this.typeId = typeId;
         this.namespace = namespace;
         this.name = name;
         this.description = description;
         this.accessKey = accessKey;
         this.bus = bus;
+        this.organizationId = organizationId;
         this.creatorType = creatorType;
         this.creatorId = creatorId;
         this.createdOn = new Date();
@@ -107,6 +111,14 @@ public class Thing implements Serializable {
 
     public void setBus(Bus bus) {
         this.bus = bus;
+    }
+
+    public String getOrganizationId() {
+        return organizationId;
+    }
+
+    public void setOrganizationId(String organizationId) {
+        this.organizationId = organizationId;
     }
 
     public ActorType getCreatorType() {

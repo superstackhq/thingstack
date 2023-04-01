@@ -1,8 +1,218 @@
 package one.superstack.thingstack.service;
 
+import com.mongodb.client.result.UpdateResult;
+import one.superstack.thingstack.auth.actor.AuthenticatedActor;
+import one.superstack.thingstack.embedded.Bus;
+import one.superstack.thingstack.enums.Permission;
+import one.superstack.thingstack.enums.TargetType;
+import one.superstack.thingstack.enums.TopicAccess;
+import one.superstack.thingstack.exception.ClientException;
+import one.superstack.thingstack.exception.NotFoundException;
+import one.superstack.thingstack.model.Thing;
+import one.superstack.thingstack.model.ThingType;
+import one.superstack.thingstack.repository.ThingRepository;
+import one.superstack.thingstack.request.*;
+import one.superstack.thingstack.response.AccessKeyResponse;
+import one.superstack.thingstack.util.Random;
+import one.superstack.thingstack.util.TopicUtil;
+import org.bson.types.ObjectId;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Query;
+import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.stereotype.Service;
+
+import java.util.Date;
+import java.util.List;
+import java.util.Set;
+import java.util.function.Supplier;
 
 @Service
 public class ThingService {
 
+    private final ThingRepository thingRepository;
+
+    private final ThingTypeService thingTypeService;
+
+    private final MqttUserService mqttUserService;
+
+    private final MqttAclService mqttAclService;
+
+    private final AccessService accessService;
+
+    private final MongoTemplate mongoTemplate;
+
+    @Autowired
+    public ThingService(ThingRepository thingRepository, ThingTypeService thingTypeService, MqttUserService mqttUserService, MqttAclService mqttAclService, AccessService accessService, MongoTemplate mongoTemplate) {
+        this.thingRepository = thingRepository;
+        this.thingTypeService = thingTypeService;
+        this.mqttUserService = mqttUserService;
+        this.mqttAclService = mqttAclService;
+        this.accessService = accessService;
+        this.mongoTemplate = mongoTemplate;
+    }
+
+    public Thing create(ThingCreationRequest thingCreationRequest, AuthenticatedActor creator) throws Throwable {
+        ThingType thingType = thingTypeService.get(thingCreationRequest.getTypeId(), creator.getOrganizationId());
+
+        if (null != thingCreationRequest.getNamespace() && thingCreationRequest.getNamespace().isEmpty()) {
+            thingCreationRequest.setNamespace(null);
+        }
+
+        String accessKey = Random.generateRandomString(128);
+
+        Thing thing = new Thing(thingCreationRequest.getTypeId(),
+                thingCreationRequest.getNamespace(),
+                thingCreationRequest.getName(),
+                thingCreationRequest.getDescription(),
+                accessKey,
+                null,
+                creator.getOrganizationId(),
+                creator.getType(),
+                creator.getId());
+
+        thing = thingRepository.save(thing);
+
+
+        // Validate the bus and set it
+        Bus validatedBus = thingCreationRequest.getBus().validateAgainstThingType(thingType, thing);
+        thing.setBus(validatedBus);
+        thing = thingRepository.save(thing);
+
+        // Initialize mqtt layer for the thing
+        initMqtt(thing);
+
+        // Grant full access to the creator
+        accessService.add(new AccessRequest(TargetType.THING, thing.getId(), creator.getType(), creator.getId(), Set.of(Permission.ALL)), creator);
+
+        return thing;
+    }
+
+    public List<Thing> list(String thingTypeId, String organizationId, Pageable pageable) {
+        return thingRepository.findByTypeIdAndOrganizationId(thingTypeId, organizationId, pageable);
+    }
+
+    public Thing get(String thingId, String organizationId) throws Throwable {
+        return thingRepository.findByIdAndOrganizationId(thingId, organizationId)
+                .orElseThrow((Supplier<Throwable>) () -> new NotFoundException("Thing not found"));
+    }
+
+    public Thing update(String thingId, ThingUpdateRequest thingUpdateRequest, String organizationId) throws Throwable {
+        Thing thing = get(thingId, organizationId);
+
+        thing.setDescription(thingUpdateRequest.getDescription());
+
+        thing.setModifiedOn(new Date());
+        return thingRepository.save(thing);
+    }
+
+    public Thing delete(String thingId, String organizationId) throws Throwable {
+        Thing thing = get(thingId, organizationId);
+        thingRepository.delete(thing);
+
+        // Clean up mqtt stuff
+        mqttUserService.delete(thing.getId());
+        mqttAclService.deleteAll(thing.getId());
+
+        // Clean up access stuff
+        accessService.deleteAllForTarget(TargetType.THING, thing.getId());
+
+        return thing;
+    }
+
+    public AccessKeyResponse getAccessKey(String thingId, String organizationId) throws Throwable {
+        return new AccessKeyResponse(get(thingId, organizationId).getAccessKey());
+    }
+
+    public AccessKeyResponse resetAccessKey(String thingId, String organizationId) throws Throwable {
+        Thing thing = get(thingId, organizationId);
+        thing.setAccessKey(Random.generateRandomString(128));
+        thing.setModifiedOn(new Date());
+        thing = thingRepository.save(thing);
+        return new AccessKeyResponse(thing.getAccessKey());
+    }
+
+    public void changeAffordanceTopic(String thingId, ThingBusTopicChangeRequest thingBusTopicChangeRequest, String organizationId) {
+        if (!TopicUtil.validateOrganization(thingBusTopicChangeRequest.getTopic(), organizationId)) {
+            throw new ClientException("Topic does not belong to the same tenant");
+        }
+
+        String busFieldKey = Bus.getFieldKey(thingBusTopicChangeRequest.getTopicType(), thingBusTopicChangeRequest.getKey());
+
+        Thing thing = mongoTemplate.findAndModify(Query.query(Criteria
+                        .where("id").is(new ObjectId(thingId))
+                        .and("organizationId").is(organizationId)
+                        .and(busFieldKey).exists(true)
+                ),
+                new Update()
+                        .set("modifiedOn", new Date())
+                        .set(busFieldKey, thingBusTopicChangeRequest.getTopic()),
+                Thing.class);
+
+        if (null == thing) {
+            throw new NotFoundException("Thing bus topic not found");
+        }
+
+        TopicAccess topicAccess = TopicUtil.getTopicAccessForTopicType(thingBusTopicChangeRequest.getTopicType());
+
+        // Remove existing topic
+        mqttAclService.delete(thingId, topicAccess,
+                Set.of(thing.getBus().getTopic(thingBusTopicChangeRequest.getTopicType(), thingBusTopicChangeRequest.getKey())));
+
+        // Add existing topic
+        mqttAclService.add(thingId, topicAccess, Set.of(thingBusTopicChangeRequest.getTopic()));
+    }
+
+    public void addCustomTopicAccess(String thingId, ThingBusCustomTopicRequest thingBusCustomTopicRequest, String organizationId) {
+        if (!TopicUtil.validateOrganization(thingBusCustomTopicRequest.getTopic(), organizationId)) {
+            throw new ClientException("Topic does not belong to the same tenant");
+        }
+
+        String busFieldKey = Bus.getFieldKey(thingBusCustomTopicRequest.getTopicAccess());
+
+        UpdateResult updateResult = mongoTemplate.updateFirst(Query.query(Criteria
+                        .where("id").is(new ObjectId(thingId))
+                        .and("organizationId").is(organizationId)
+                ),
+                new Update()
+                        .set("modifiedOn", new Date())
+                        .addToSet(busFieldKey, thingBusCustomTopicRequest.getTopic()),
+                Thing.class);
+
+        if (updateResult.getMatchedCount() == 0) {
+            throw new NotFoundException("Thing not found");
+        }
+
+        mqttAclService.add(thingId, thingBusCustomTopicRequest.getTopicAccess(), Set.of(thingBusCustomTopicRequest.getTopic()));
+    }
+
+    public void deleteCustomTopicAccess(String thingId, ThingBusCustomTopicRequest thingBusCustomTopicRequest, String organizationId) {
+        String busFieldKey = Bus.getFieldKey(thingBusCustomTopicRequest.getTopicAccess());
+
+        UpdateResult updateResult = mongoTemplate.updateFirst(Query.query(Criteria
+                        .where("id").is(new ObjectId(thingId))
+                        .and("organizationId").is(organizationId)
+                ),
+                new Update()
+                        .set("modifiedOn", new Date())
+                        .pull(busFieldKey, thingBusCustomTopicRequest.getTopic()),
+                Thing.class);
+
+        if (updateResult.getMatchedCount() == 0) {
+            throw new NotFoundException("Thing not found");
+        }
+
+        mqttAclService.delete(thingId, thingBusCustomTopicRequest.getTopicAccess(), Set.of(thingBusCustomTopicRequest.getTopic()));
+    }
+
+    private void initMqtt(Thing thing) {
+        mqttUserService.add(thing.getId(), thing.getAccessKey());
+
+        mqttAclService.add(thing.getId(),
+                thing.getBus().getAllTopicsWithPublishAccess(),
+                thing.getBus().getAllTopicsWithSubscribeAccess(),
+                thing.getBus().getAllTopicsWithPubSubAccess());
+    }
 }

@@ -324,7 +324,7 @@ public class Bus implements Serializable {
         return String.format("%s.%s", prefix, affordanceKey);
     }
 
-    public Set<String> getAllTopicsWithPublishAccess() {
+    public Set<String> getAllTopicsWithPublishAccessFromThing() {
         Set<String> topics = new HashSet<>();
 
         if (null != customPublishTopics) {
@@ -346,7 +346,7 @@ public class Bus implements Serializable {
         return topics;
     }
 
-    public Set<String> getAllTopicsWithSubscribeAccess() {
+    public Set<String> getAllTopicsWithSubscribeAccessFromThing() {
         Set<String> topics = new HashSet<>();
 
         if (null != customSubscribeTopics) {
@@ -364,7 +364,7 @@ public class Bus implements Serializable {
         return topics;
     }
 
-    public Set<String> getAllTopicsWithPubSubAccess() {
+    public Set<String> getAllTopicsWithPubSubAccessFromThing() {
         return customPubSubTopics;
     }
 }

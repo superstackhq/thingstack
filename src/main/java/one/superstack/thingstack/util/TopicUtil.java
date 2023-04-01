@@ -5,6 +5,7 @@ import one.superstack.thingstack.enums.TopicAccess;
 import one.superstack.thingstack.exception.ClientException;
 import one.superstack.thingstack.model.Thing;
 import one.superstack.thingstack.model.ThingType;
+import org.springframework.data.mongodb.core.aggregation.ArithmeticOperators;
 
 import java.util.List;
 import java.util.Objects;
@@ -27,7 +28,7 @@ public class TopicUtil {
         return Objects.equals(components[1], organizationId);
     }
 
-    public static TopicAccess getTopicAccessForTopicType(ThingBusTopicType topicType) {
+    public static TopicAccess getThingTopicAccessForTopicType(ThingBusTopicType topicType) {
         switch (topicType) {
             case PROPERTY, ACTION_INVOCATION -> {
                 return TopicAccess.SUBSCRIBE;
@@ -35,6 +36,20 @@ public class TopicUtil {
 
             case PROPERTY_ACK, ACTION_RESULT, EVENT -> {
                 return TopicAccess.PUBLISH;
+            }
+
+            default -> throw new ClientException("Invalid thing bus topic type");
+        }
+    }
+
+    public static TopicAccess getReflectionTopicAccessForTopicType(ThingBusTopicType topicType) {
+        switch (topicType) {
+            case PROPERTY, ACTION_INVOCATION -> {
+                return TopicAccess.PUBLISH;
+            }
+
+            case PROPERTY_ACK, ACTION_RESULT, EVENT -> {
+                return TopicAccess.SUBSCRIBE;
             }
 
             default -> throw new ClientException("Invalid thing bus topic type");

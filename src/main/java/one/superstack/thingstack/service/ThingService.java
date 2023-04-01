@@ -40,6 +40,9 @@ public class ThingService {
 
     private final MqttAclService mqttAclService;
 
+
+    private final ReflectionService reflectionService;
+
     private final AccessService accessService;
 
     private final NamespaceService namespaceService;
@@ -47,11 +50,12 @@ public class ThingService {
     private final MongoTemplate mongoTemplate;
 
     @Autowired
-    public ThingService(ThingRepository thingRepository, ThingTypeService thingTypeService, MqttUserService mqttUserService, MqttAclService mqttAclService, AccessService accessService, NamespaceService namespaceService, MongoTemplate mongoTemplate) {
+    public ThingService(ThingRepository thingRepository, ThingTypeService thingTypeService, MqttUserService mqttUserService, MqttAclService mqttAclService, ReflectionService reflectionService, AccessService accessService, NamespaceService namespaceService, MongoTemplate mongoTemplate) {
         this.thingRepository = thingRepository;
         this.thingTypeService = thingTypeService;
         this.mqttUserService = mqttUserService;
         this.mqttAclService = mqttAclService;
+        this.reflectionService = reflectionService;
         this.accessService = accessService;
         this.namespaceService = namespaceService;
         this.mongoTemplate = mongoTemplate;
@@ -94,6 +98,9 @@ public class ThingService {
             namespaceService.register(thing.getNamespace(), thing.getTypeId(), thing.getOrganizationId());
         }
 
+        // create the reflection
+        reflectionService.init(thing);
+
         return thing;
     }
 
@@ -131,6 +138,9 @@ public class ThingService {
         // Clean up access stuff
         accessService.deleteAllForTarget(TargetType.THING, thing.getId());
 
+        // Clean up reflection
+        reflectionService.delete(thingId);
+
         return thing;
     }
 
@@ -140,9 +150,14 @@ public class ThingService {
 
     public AccessKeyResponse resetAccessKey(String thingId, String organizationId) throws Throwable {
         Thing thing = get(thingId, organizationId);
+
         thing.setAccessKey(Random.generateRandomString(128));
+
         thing.setModifiedOn(new Date());
         thing = thingRepository.save(thing);
+
+        mqttUserService.changePassword(thing.getId(), thing.getAccessKey());
+
         return new AccessKeyResponse(thing.getAccessKey());
     }
 
@@ -151,7 +166,7 @@ public class ThingService {
             throw new ClientException("Topic does not belong to the same tenant");
         }
 
-        String busFieldKey = Bus.getFieldKey(thingBusTopicChangeRequest.getTopicType(), thingBusTopicChangeRequest.getKey());
+        String busFieldKey = Bus.getFieldKey(thingBusTopicChangeRequest.getType(), thingBusTopicChangeRequest.getKey());
 
         Thing thing = mongoTemplate.findAndModify(Query.query(Criteria
                         .where("id").is(new ObjectId(thingId))
@@ -167,22 +182,25 @@ public class ThingService {
             throw new NotFoundException("Thing bus topic not found");
         }
 
-        TopicAccess topicAccess = TopicUtil.getTopicAccessForTopicType(thingBusTopicChangeRequest.getTopicType());
+        TopicAccess topicAccess = TopicUtil.getThingTopicAccessForTopicType(thingBusTopicChangeRequest.getType());
 
         // Remove existing topic
         mqttAclService.delete(thingId, topicAccess,
-                Set.of(thing.getBus().getTopic(thingBusTopicChangeRequest.getTopicType(), thingBusTopicChangeRequest.getKey())));
+                Set.of(thing.getBus().getTopic(thingBusTopicChangeRequest.getType(), thingBusTopicChangeRequest.getKey())));
 
         // Add existing topic
         mqttAclService.add(thingId, topicAccess, Set.of(thingBusTopicChangeRequest.getTopic()));
+
+        // Change the reflection topics too
+        reflectionService.changeAffordanceTopic(thingId, thingBusTopicChangeRequest);
     }
 
-    public void addCustomTopicAccess(String thingId, ThingBusCustomTopicRequest thingBusCustomTopicRequest, String organizationId) {
-        if (!TopicUtil.validateOrganization(thingBusCustomTopicRequest.getTopic(), organizationId)) {
+    public void addCustomTopicAccess(String thingId, CustomBusTopicAccessRequest customBusTopicAccessRequest, String organizationId) {
+        if (!TopicUtil.validateOrganization(customBusTopicAccessRequest.getTopic(), organizationId)) {
             throw new ClientException("Topic does not belong to the same tenant");
         }
 
-        String busFieldKey = Bus.getFieldKey(thingBusCustomTopicRequest.getTopicAccess());
+        String busFieldKey = Bus.getFieldKey(customBusTopicAccessRequest.getAccess());
 
         UpdateResult updateResult = mongoTemplate.updateFirst(Query.query(Criteria
                         .where("id").is(new ObjectId(thingId))
@@ -190,18 +208,18 @@ public class ThingService {
                 ),
                 new Update()
                         .set("modifiedOn", new Date())
-                        .addToSet(busFieldKey, thingBusCustomTopicRequest.getTopic()),
+                        .addToSet(busFieldKey, customBusTopicAccessRequest.getTopic()),
                 Thing.class);
 
         if (updateResult.getMatchedCount() == 0) {
             throw new NotFoundException("Thing not found");
         }
 
-        mqttAclService.add(thingId, thingBusCustomTopicRequest.getTopicAccess(), Set.of(thingBusCustomTopicRequest.getTopic()));
+        mqttAclService.add(thingId, customBusTopicAccessRequest.getAccess(), Set.of(customBusTopicAccessRequest.getTopic()));
     }
 
-    public void deleteCustomTopicAccess(String thingId, ThingBusCustomTopicRequest thingBusCustomTopicRequest, String organizationId) {
-        String busFieldKey = Bus.getFieldKey(thingBusCustomTopicRequest.getTopicAccess());
+    public void deleteCustomTopicAccess(String thingId, CustomBusTopicAccessRequest customBusTopicAccessRequest, String organizationId) {
+        String busFieldKey = Bus.getFieldKey(customBusTopicAccessRequest.getAccess());
 
         UpdateResult updateResult = mongoTemplate.updateFirst(Query.query(Criteria
                         .where("id").is(new ObjectId(thingId))
@@ -209,14 +227,14 @@ public class ThingService {
                 ),
                 new Update()
                         .set("modifiedOn", new Date())
-                        .pull(busFieldKey, thingBusCustomTopicRequest.getTopic()),
+                        .pull(busFieldKey, customBusTopicAccessRequest.getTopic()),
                 Thing.class);
 
         if (updateResult.getMatchedCount() == 0) {
             throw new NotFoundException("Thing not found");
         }
 
-        mqttAclService.delete(thingId, thingBusCustomTopicRequest.getTopicAccess(), Set.of(thingBusCustomTopicRequest.getTopic()));
+        mqttAclService.delete(thingId, customBusTopicAccessRequest.getAccess(), Set.of(customBusTopicAccessRequest.getTopic()));
     }
 
     public Boolean exists(String thingId, String organizationId) {
@@ -227,8 +245,8 @@ public class ThingService {
         mqttUserService.add(thing.getId(), thing.getAccessKey());
 
         mqttAclService.add(thing.getId(),
-                thing.getBus().getAllTopicsWithPublishAccess(),
-                thing.getBus().getAllTopicsWithSubscribeAccess(),
-                thing.getBus().getAllTopicsWithPubSubAccess());
+                thing.getBus().getAllTopicsWithPublishAccessFromThing(),
+                thing.getBus().getAllTopicsWithSubscribeAccessFromThing(),
+                thing.getBus().getAllTopicsWithPubSubAccessFromThing());
     }
 }

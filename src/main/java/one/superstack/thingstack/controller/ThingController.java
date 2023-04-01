@@ -5,7 +5,7 @@ import one.superstack.thingstack.auth.actor.AuthenticatedController;
 import one.superstack.thingstack.enums.Permission;
 import one.superstack.thingstack.enums.TargetType;
 import one.superstack.thingstack.model.Thing;
-import one.superstack.thingstack.request.ThingBusCustomTopicRequest;
+import one.superstack.thingstack.request.CustomBusTopicAccessRequest;
 import one.superstack.thingstack.request.ThingBusTopicChangeRequest;
 import one.superstack.thingstack.request.ThingCreationRequest;
 import one.superstack.thingstack.request.ThingUpdateRequest;
@@ -81,16 +81,16 @@ public class ThingController extends AuthenticatedController {
     }
 
     @PostMapping(value = "/things/{thingId}/bus/topics/custom")
-    public SuccessResponse addCustomTopicAccess(@PathVariable String thingId, @Valid @RequestBody ThingBusCustomTopicRequest thingBusCustomTopicRequest) {
+    public SuccessResponse addCustomTopicAccess(@PathVariable String thingId, @Valid @RequestBody CustomBusTopicAccessRequest customBusTopicAccessRequest) {
         checkAccess(accessService, TargetType.THING, thingId, Permission.MANAGE_BUS);
-        thingService.addCustomTopicAccess(thingId, thingBusCustomTopicRequest, getOrganizationId());
+        thingService.addCustomTopicAccess(thingId, customBusTopicAccessRequest, getOrganizationId());
         return new SuccessResponse("Custom topic added to thing bus successfully");
     }
 
     @DeleteMapping(value = "/things/{thingId}/bus/topics/custom")
-    public SuccessResponse deleteCustomTopicAccess(@PathVariable String thingId, @Valid @RequestBody ThingBusCustomTopicRequest thingBusCustomTopicRequest) {
+    public SuccessResponse deleteCustomTopicAccess(@PathVariable String thingId, @Valid @RequestBody CustomBusTopicAccessRequest customBusTopicAccessRequest) {
         checkAccess(accessService, TargetType.THING, thingId, Permission.MANAGE_BUS);
-        thingService.deleteCustomTopicAccess(thingId, thingBusCustomTopicRequest, getOrganizationId());
+        thingService.deleteCustomTopicAccess(thingId, customBusTopicAccessRequest, getOrganizationId());
         return new SuccessResponse("Custom topic removed from thing bus successfully");
     }
 }

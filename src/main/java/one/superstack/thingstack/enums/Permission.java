@@ -14,5 +14,7 @@ public enum Permission {
 
     MANAGE_BUS,
 
-    CREATE_THING
+    CREATE_THING,
+
+    MANAGE_REFLECTION
 }

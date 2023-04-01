@@ -6,21 +6,21 @@ import one.superstack.thingstack.enums.TopicAccess;
 
 import java.io.Serializable;
 
-public class ThingBusCustomTopicRequest implements Serializable {
+public class CustomBusTopicAccessRequest implements Serializable {
 
     @NotBlank
     private String topic;
 
     @NotNull
-    private TopicAccess topicAccess;
+    private TopicAccess access;
 
-    public ThingBusCustomTopicRequest() {
+    public CustomBusTopicAccessRequest() {
 
     }
 
-    public ThingBusCustomTopicRequest(String topic, TopicAccess topicAccess) {
+    public CustomBusTopicAccessRequest(String topic, TopicAccess access) {
         this.topic = topic;
-        this.topicAccess = topicAccess;
+        this.access = access;
     }
 
     public String getTopic() {
@@ -31,11 +31,11 @@ public class ThingBusCustomTopicRequest implements Serializable {
         this.topic = topic;
     }
 
-    public TopicAccess getTopicAccess() {
-        return topicAccess;
+    public TopicAccess getAccess() {
+        return access;
     }
 
-    public void setTopicAccess(TopicAccess topicAccess) {
-        this.topicAccess = topicAccess;
+    public void setAccess(TopicAccess access) {
+        this.access = access;
     }
 }

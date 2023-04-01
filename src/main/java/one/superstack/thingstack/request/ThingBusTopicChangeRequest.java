@@ -9,7 +9,7 @@ import java.io.Serializable;
 public class ThingBusTopicChangeRequest implements Serializable {
 
     @NotNull
-    private ThingBusTopicType topicType;
+    private ThingBusTopicType type;
 
     @NotBlank
     private String key;
@@ -21,18 +21,18 @@ public class ThingBusTopicChangeRequest implements Serializable {
 
     }
 
-    public ThingBusTopicChangeRequest(ThingBusTopicType topicType, String key, String topic) {
-        this.topicType = topicType;
+    public ThingBusTopicChangeRequest(ThingBusTopicType type, String key, String topic) {
+        this.type = type;
         this.key = key;
         this.topic = topic;
     }
 
-    public ThingBusTopicType getTopicType() {
-        return topicType;
+    public ThingBusTopicType getType() {
+        return type;
     }
 
-    public void setTopicType(ThingBusTopicType topicType) {
-        this.topicType = topicType;
+    public void setType(ThingBusTopicType type) {
+        this.type = type;
     }
 
     public String getKey() {

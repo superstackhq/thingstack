@@ -3,20 +3,21 @@ package one.superstack.thingstack.embedded;
 import one.superstack.thingstack.enums.HookType;
 
 import java.io.Serializable;
+import java.util.Objects;
 
 public class HookReference implements Serializable {
 
     private HookType type;
 
-    private String id;
+    private String referenceId;
 
     public HookReference() {
 
     }
 
-    public HookReference(HookType type, String id) {
+    public HookReference(HookType type, String referenceId) {
         this.type = type;
-        this.id = id;
+        this.referenceId = referenceId;
     }
 
     public HookType getType() {
@@ -27,11 +28,24 @@ public class HookReference implements Serializable {
         this.type = type;
     }
 
-    public String getId() {
-        return id;
+    public String getReferenceId() {
+        return referenceId;
     }
 
-    public void setId(String id) {
-        this.id = id;
+    public void setReferenceId(String referenceId) {
+        this.referenceId = referenceId;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        HookReference hookReference = (HookReference) o;
+        return type == hookReference.type && Objects.equals(referenceId, hookReference.referenceId);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(type, referenceId);
     }
 }

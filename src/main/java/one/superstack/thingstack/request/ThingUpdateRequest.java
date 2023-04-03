@@ -7,14 +7,25 @@ import java.util.List;
 
 public class ThingUpdateRequest implements Serializable {
 
+    private String name;
+
     private String description;
 
     public ThingUpdateRequest() {
 
     }
 
-    public ThingUpdateRequest(String description) {
+    public ThingUpdateRequest(String name, String description) {
+        this.name = name;
         this.description = description;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
     }
 
     public String getDescription() {

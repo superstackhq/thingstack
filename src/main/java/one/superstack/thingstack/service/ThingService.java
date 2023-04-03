@@ -121,6 +121,10 @@ public class ThingService {
     public Thing update(String thingId, ThingUpdateRequest thingUpdateRequest, String organizationId) throws Throwable {
         Thing thing = get(thingId, organizationId);
 
+        if (null != thingUpdateRequest.getName() && !thingUpdateRequest.getName().isEmpty()) {
+            thing.setName(thingUpdateRequest.getName());
+        }
+
         thing.setDescription(thingUpdateRequest.getDescription());
 
         thing.setModifiedOn(new Date());

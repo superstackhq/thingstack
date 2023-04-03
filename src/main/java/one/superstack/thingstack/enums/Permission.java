@@ -16,5 +16,7 @@ public enum Permission {
 
     CREATE_THING,
 
-    MANAGE_REFLECTION
+    MANAGE_REFLECTION,
+
+    MANAGE_HOOK
 }

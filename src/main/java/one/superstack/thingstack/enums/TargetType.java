@@ -10,5 +10,9 @@ public enum TargetType {
 
     WEB_HOOK,
 
+    THING_HOOK,
+
+    REFLECTION_HOOK,
+
     RULE
 }

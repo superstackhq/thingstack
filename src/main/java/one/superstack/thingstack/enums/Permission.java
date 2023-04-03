@@ -18,5 +18,7 @@ public enum Permission {
 
     MANAGE_REFLECTION,
 
-    MANAGE_HOOK
+    MANAGE_HOOK,
+
+    MANAGE_SECRET
 }

@@ -9,15 +9,15 @@ public class HookReference implements Serializable {
 
     private HookType type;
 
-    private String referenceId;
+    private String id;
 
     public HookReference() {
 
     }
 
-    public HookReference(HookType type, String referenceId) {
+    public HookReference(HookType type, String id) {
         this.type = type;
-        this.referenceId = referenceId;
+        this.id = id;
     }
 
     public HookType getType() {
@@ -28,12 +28,12 @@ public class HookReference implements Serializable {
         this.type = type;
     }
 
-    public String getReferenceId() {
-        return referenceId;
+    public String getId() {
+        return id;
     }
 
-    public void setReferenceId(String referenceId) {
-        this.referenceId = referenceId;
+    public void setId(String id) {
+        this.id = id;
     }
 
     @Override
@@ -41,11 +41,11 @@ public class HookReference implements Serializable {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         HookReference hookReference = (HookReference) o;
-        return type == hookReference.type && Objects.equals(referenceId, hookReference.referenceId);
+        return type == hookReference.type && Objects.equals(id, hookReference.id);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(type, referenceId);
+        return Objects.hash(type, id);
     }
 }

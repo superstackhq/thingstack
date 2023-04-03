@@ -16,11 +16,14 @@ public class TargetService {
 
     private final RuleService ruleService;
 
+    private final WebhookService webhookService;
+
     @Autowired
-    public TargetService(ThingTypeService thingTypeService, ThingService thingService, RuleService ruleService) {
+    public TargetService(ThingTypeService thingTypeService, ThingService thingService, RuleService ruleService, WebhookService webhookService) {
         this.thingTypeService = thingTypeService;
         this.thingService = thingService;
         this.ruleService = ruleService;
+        this.webhookService = webhookService;
     }
 
     public Boolean exists(TargetType targetType, String targetId, String organizationId) {
@@ -35,6 +38,10 @@ public class TargetService {
 
             case RULE -> {
                 return ruleService.exists(targetId, organizationId);
+            }
+
+            case WEB_HOOK -> {
+                return webhookService.exists(targetId, organizationId);
             }
 
             default -> throw new ClientException("Invalid target type");
@@ -53,6 +60,10 @@ public class TargetService {
 
             case RULE -> {
                 return new Target(TargetType.RULE, targetReference.getId(), ruleService.get(targetReference.getId()));
+            }
+
+            case WEB_HOOK -> {
+                return new Target(TargetType.WEB_HOOK, targetReference.getId(), webhookService.get(targetReference.getId()));
             }
 
             default -> throw new ClientException("Invalid target type");

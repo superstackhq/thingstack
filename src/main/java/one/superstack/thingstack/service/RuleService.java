@@ -26,6 +26,7 @@ import org.springframework.stereotype.Service;
 import java.util.Date;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.ExecutionException;
 import java.util.function.Supplier;
 
 @Service
@@ -47,7 +48,7 @@ public class RuleService {
         this.mongoTemplate = mongoTemplate;
     }
 
-    public Rule create(RuleCreationRequest ruleCreationRequest, AuthenticatedActor creator) {
+    public Rule create(RuleCreationRequest ruleCreationRequest, AuthenticatedActor creator) throws ExecutionException, InterruptedException {
         if (nameExists(ruleCreationRequest.getName(), creator.getOrganizationId())) {
             throw new ClientException("Rule " + ruleCreationRequest.getName() + " already exists");
         }

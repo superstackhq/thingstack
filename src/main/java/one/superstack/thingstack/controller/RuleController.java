@@ -17,6 +17,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 
 @RestController
 @RequestMapping(value = "/api/v1")
@@ -33,7 +34,7 @@ public class RuleController extends AuthenticatedController {
     }
 
     @PostMapping(value = "/rules")
-    public Rule create(@Valid @RequestBody RuleCreationRequest ruleCreationRequest) {
+    public Rule create(@Valid @RequestBody RuleCreationRequest ruleCreationRequest) throws ExecutionException, InterruptedException {
         checkAccess(accessService, TargetType.RULE, null, Permission.CREATE);
         return ruleService.create(ruleCreationRequest, getActor());
     }

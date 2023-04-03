@@ -18,12 +18,15 @@ public class TargetService {
 
     private final WebhookService webhookService;
 
+    private final MessageHookService messageHookService;
+
     @Autowired
-    public TargetService(ThingTypeService thingTypeService, ThingService thingService, RuleService ruleService, WebhookService webhookService) {
+    public TargetService(ThingTypeService thingTypeService, ThingService thingService, RuleService ruleService, WebhookService webhookService, MessageHookService messageHookService) {
         this.thingTypeService = thingTypeService;
         this.thingService = thingService;
         this.ruleService = ruleService;
         this.webhookService = webhookService;
+        this.messageHookService = messageHookService;
     }
 
     public Boolean exists(TargetType targetType, String targetId, String organizationId) {
@@ -42,6 +45,10 @@ public class TargetService {
 
             case WEB_HOOK -> {
                 return webhookService.exists(targetId, organizationId);
+            }
+
+            case MESSAGE_HOOK -> {
+                return messageHookService.exists(targetId, organizationId);
             }
 
             default -> throw new ClientException("Invalid target type");
@@ -64,6 +71,10 @@ public class TargetService {
 
             case WEB_HOOK -> {
                 return new Target(TargetType.WEB_HOOK, targetReference.getId(), webhookService.get(targetReference.getId()));
+            }
+
+            case MESSAGE_HOOK -> {
+                return new Target(TargetType.MESSAGE_HOOK, targetReference.getId(), messageHookService.get(targetReference.getId()));
             }
 
             default -> throw new ClientException("Invalid target type");

@@ -17,7 +17,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping(value = "/api/v1")
+@RequestMapping(value = "/api/v1/hooks")
 public class WebHookController extends AuthenticatedController {
 
     private final WebhookService webhookService;
@@ -30,41 +30,41 @@ public class WebHookController extends AuthenticatedController {
         this.accessService = accessService;
     }
 
-    @PostMapping(value = "/webhooks")
+    @PostMapping(value = "/web")
     public WebHook create(@Valid @RequestBody WebHookCreationRequest webHookCreationRequest) {
         checkAccess(accessService, TargetType.WEB_HOOK, null, Permission.CREATE);
         return webhookService.create(webHookCreationRequest, getActor());
     }
 
-    @GetMapping(value = "/webhooks")
+    @GetMapping(value = "/web")
     public List<WebHook> list(Pageable pageable) {
         return webhookService.list(getOrganizationId(), pageable);
     }
 
-    @GetMapping(value = "/webhooks/{webhookId}")
+    @GetMapping(value = "/web/{webhookId}")
     public WebHook get(@PathVariable String webhookId) throws Throwable {
         return webhookService.get(webhookId, getOrganizationId());
     }
 
-    @PutMapping(value = "/webhooks/{webhookId}")
+    @PutMapping(value = "/web/{webhookId}")
     public WebHook update(@PathVariable String webhookId, @Valid @RequestBody WebHookUpdateRequest webHookUpdateRequest) throws Throwable {
         checkAccess(accessService, TargetType.WEB_HOOK, webhookId, Permission.UPDATE);
         return webhookService.update(webhookId, webHookUpdateRequest, getOrganizationId());
     }
 
-    @DeleteMapping(value = "/webhooks/{webhookId}")
+    @DeleteMapping(value = "/web/{webhookId}")
     public WebHook delete(@PathVariable String webhookId) throws Throwable {
         checkAccess(accessService, TargetType.WEB_HOOK, webhookId, Permission.DELETE);
         return webhookService.delete(webhookId, getOrganizationId());
     }
 
-    @GetMapping(value = "/webhooks/{webhookId}/secret")
+    @GetMapping(value = "/web/{webhookId}/secret")
     public SecretResponse getSecret(@PathVariable String webhookId) throws Throwable {
         checkAccess(accessService, TargetType.WEB_HOOK, webhookId, Permission.MANAGE_SECRET);
         return webhookService.getSecret(webhookId, getOrganizationId());
     }
 
-    @PutMapping(value = "/webhooks/{webhookId}/secret")
+    @PutMapping(value = "/web/{webhookId}/secret")
     public SecretResponse resetSecret(@PathVariable String webhookId) throws Throwable {
         checkAccess(accessService, TargetType.WEB_HOOK, webhookId, Permission.MANAGE_SECRET);
         return webhookService.resetSecret(webhookId, getOrganizationId());

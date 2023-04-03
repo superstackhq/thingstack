@@ -20,5 +20,7 @@ public enum Permission {
 
     MANAGE_HOOK,
 
-    MANAGE_SECRET
+    MANAGE_SECRET,
+
+    MANAGE_BROKER
 }

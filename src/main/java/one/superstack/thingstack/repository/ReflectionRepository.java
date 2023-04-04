@@ -10,4 +10,6 @@ import java.util.Optional;
 public interface ReflectionRepository extends MongoRepository<Reflection, String> {
 
     Optional<Reflection> findByThingIdAndOrganizationId(String thingId, String organizationId);
+
+    Optional<Reflection> findByAccessKey(String accessKey);
 }

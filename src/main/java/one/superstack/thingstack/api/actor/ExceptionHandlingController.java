@@ -1,4 +1,4 @@
-package one.superstack.thingstack.controller;
+package one.superstack.thingstack.api.actor;
 
 import one.superstack.thingstack.exception.*;
 import one.superstack.thingstack.response.ErrorResponse;

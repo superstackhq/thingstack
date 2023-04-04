@@ -1,4 +1,4 @@
-package one.superstack.thingstack.controller;
+package one.superstack.thingstack.api.actor;
 
 import one.superstack.thingstack.auth.actor.AuthenticatedController;
 import one.superstack.thingstack.model.Organization;

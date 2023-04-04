@@ -1,4 +1,4 @@
-package one.superstack.thingstack.controller;
+package one.superstack.thingstack.api.actor;
 
 import jakarta.validation.Valid;
 import one.superstack.thingstack.auth.actor.AuthenticatedController;

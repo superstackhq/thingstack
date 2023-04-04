@@ -22,5 +22,15 @@ public enum Permission {
 
     MANAGE_SECRET,
 
-    MANAGE_BROKER
+    MANAGE_BROKER,
+
+    SET_PROPERTY,
+
+    ACK_PROPERTY_CHANGE,
+
+    INVOKE_ACTION,
+
+    SET_ACTION_RESULT,
+
+    EMIT_EVENT
 }

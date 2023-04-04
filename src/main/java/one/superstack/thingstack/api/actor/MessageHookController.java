@@ -1,4 +1,4 @@
-package one.superstack.thingstack.controller;
+package one.superstack.thingstack.api.actor;
 
 import jakarta.validation.Valid;
 import one.superstack.thingstack.auth.actor.AuthenticatedController;
@@ -61,13 +61,13 @@ public class MessageHookController extends AuthenticatedController {
 
     @PutMapping(value = "/message/{messageHookId}/broker")
     public MessageHook updateBroker(@PathVariable String messageHookId, @Valid @RequestBody Broker broker) throws Throwable {
-        checkAccess(accessService, TargetType.MESSAGE_HOOK, messageHookId, Permission.MANAGE_HOOK);
+        checkAccess(accessService, TargetType.MESSAGE_HOOK, messageHookId, Permission.MANAGE_BROKER);
         return messageHookService.updateBroker(messageHookId, broker, getOrganizationId());
     }
 
     @GetMapping(value = "/message/{messageHookId}/broker/password")
     public PasswordResponse getBrokerPassword(@PathVariable String messageHookId) throws Throwable {
-        checkAccess(accessService, TargetType.MESSAGE_HOOK, messageHookId, Permission.MANAGE_HOOK);
+        checkAccess(accessService, TargetType.MESSAGE_HOOK, messageHookId, Permission.MANAGE_BROKER);
         return messageHookService.getBrokerPassword(messageHookId, getOrganizationId());
     }
 }

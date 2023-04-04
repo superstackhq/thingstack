@@ -1,8 +1,10 @@
 package one.superstack.thingstack.service;
 
+import one.superstack.thingstack.auth.reflection.AuthenticatedReflection;
 import one.superstack.thingstack.embedded.Bus;
 import one.superstack.thingstack.enums.TopicAccess;
 import one.superstack.thingstack.exception.ClientException;
+import one.superstack.thingstack.exception.InvalidTokenException;
 import one.superstack.thingstack.exception.NotFoundException;
 import one.superstack.thingstack.model.Reflection;
 import one.superstack.thingstack.model.Thing;
@@ -168,5 +170,10 @@ public class ReflectionService {
                 reflection.getBus().getAllTopicsWithSubscribeAccessFromThing(),
                 reflection.getBus().getAllTopicsWithPublishAccessFromThing(),
                 Collections.emptySet());
+    }
+
+    public AuthenticatedReflection getByAccessKey(String accessKey) throws Throwable {
+        Reflection reflection = reflectionRepository.findByAccessKey(accessKey).orElseThrow((Supplier<Throwable>) InvalidTokenException::new);
+        return new AuthenticatedReflection(reflection.getId(), reflection.getThingId(), reflection.getOrganizationId());
     }
 }

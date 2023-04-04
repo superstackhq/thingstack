@@ -2,11 +2,13 @@ package one.superstack.thingstack.service;
 
 import com.mongodb.client.result.UpdateResult;
 import one.superstack.thingstack.auth.actor.AuthenticatedActor;
+import one.superstack.thingstack.auth.thing.AuthenticatedThing;
 import one.superstack.thingstack.embedded.Bus;
 import one.superstack.thingstack.enums.Permission;
 import one.superstack.thingstack.enums.TargetType;
 import one.superstack.thingstack.enums.TopicAccess;
 import one.superstack.thingstack.exception.ClientException;
+import one.superstack.thingstack.exception.InvalidTokenException;
 import one.superstack.thingstack.exception.NotFoundException;
 import one.superstack.thingstack.model.Thing;
 import one.superstack.thingstack.model.ThingType;
@@ -243,6 +245,11 @@ public class ThingService {
 
     public Boolean exists(String thingId, String organizationId) {
         return thingRepository.existsByIdAndOrganizationId(thingId, organizationId);
+    }
+
+    public AuthenticatedThing getByAccessKey(String accessKey) throws Throwable {
+        Thing thing = thingRepository.findByAccessKey(accessKey).orElseThrow((Supplier<Throwable>) InvalidTokenException::new);
+        return new AuthenticatedThing(thing.getId(), thing.getOrganizationId());
     }
 
     private void initMqtt(Thing thing) {

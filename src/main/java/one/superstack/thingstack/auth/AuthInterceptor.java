@@ -6,9 +6,15 @@ import one.superstack.thingstack.auth.actor.AuthenticatedActor;
 import one.superstack.thingstack.auth.actor.Jwt;
 import one.superstack.thingstack.auth.actor.RequiresAuthentication;
 import one.superstack.thingstack.auth.actor.ThreadLocalWrapper;
+import one.superstack.thingstack.auth.reflection.AuthenticatedReflection;
+import one.superstack.thingstack.auth.reflection.RequiresReflectionAuthentication;
+import one.superstack.thingstack.auth.thing.AuthenticatedThing;
+import one.superstack.thingstack.auth.thing.RequiresThingAuthentication;
 import one.superstack.thingstack.exception.InvalidTokenException;
 import one.superstack.thingstack.exception.ServerException;
 import one.superstack.thingstack.service.ApiKeyService;
+import one.superstack.thingstack.service.ReflectionService;
+import one.superstack.thingstack.service.ThingService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.web.method.HandlerMethod;
@@ -21,21 +27,37 @@ public class AuthInterceptor implements HandlerInterceptor {
 
     private final ApiKeyService apiKeyService;
 
+    private final ThingService thingService;
+
+    private final ReflectionService reflectionService;
+
     private static final String BEARER_PREFIX = "Bearer";
     private static final String API_KEY_PREFIX = "ApiKey";
     private static final String APP_KEY_PREFIX = "AppKey";
+    private static final String THING_KEY_PREFIX = "ThingKey";
+    private static final String REFLECTION_KEY_PREFIX = "ReflectionKey";
 
     @Autowired
-    public AuthInterceptor(Jwt jwt, ApiKeyService apiKeyService) {
+    public AuthInterceptor(Jwt jwt, ApiKeyService apiKeyService, ThingService thingService, ReflectionService reflectionService) {
         this.jwt = jwt;
         this.apiKeyService = apiKeyService;
+        this.thingService = thingService;
+        this.reflectionService = reflectionService;
     }
 
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) {
         if (handler instanceof HandlerMethod) {
             Object handlerBean = ((HandlerMethod) handler).getBean();
 
-            if (handlerBean instanceof RequiresAuthentication) {
+            if (handlerBean instanceof RequiresThingAuthentication) {
+                AuthorizationHeader header = extractAuthorizationData(request);
+                AuthenticatedThing thing = getThing(header);
+                one.superstack.thingstack.auth.thing.ThreadLocalWrapper.setThing(thing);
+            } else if (handlerBean instanceof RequiresReflectionAuthentication) {
+                AuthorizationHeader header = extractAuthorizationData(request);
+                AuthenticatedReflection reflection = getReflection(header);
+                one.superstack.thingstack.auth.reflection.ThreadLocalWrapper.setReflection(reflection);
+            } else if (handlerBean instanceof RequiresAuthentication) {
                 AuthorizationHeader header = extractAuthorizationData(request);
                 AuthenticatedActor actor = getActor(header);
                 ThreadLocalWrapper.setActor(actor);
@@ -43,6 +65,30 @@ public class AuthInterceptor implements HandlerInterceptor {
         }
 
         return true;
+    }
+
+    private AuthenticatedThing getThing(AuthorizationHeader header) {
+        if (!THING_KEY_PREFIX.equals(header.getType())) {
+            throw new InvalidTokenException();
+        }
+
+        try {
+            return thingService.getByAccessKey(header.getContent());
+        } catch (Throwable e) {
+            throw new InvalidTokenException();
+        }
+    }
+
+    private AuthenticatedReflection getReflection(AuthorizationHeader header) {
+        if (!REFLECTION_KEY_PREFIX.equals(header.getType())) {
+            throw new InvalidTokenException();
+        }
+
+        try {
+            return reflectionService.getByAccessKey(header.getContent());
+        } catch (Throwable e) {
+            throw new InvalidTokenException();
+        }
     }
 
     private AuthenticatedActor getActor(AuthorizationHeader header) {

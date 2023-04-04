@@ -7,13 +7,12 @@ public class Json {
 
     private static final ObjectMapper objectMapper = new ObjectMapper();
 
-    @SuppressWarnings("deprecation")
     public static Object decode(String s, Class<?> c) {
         Object u = null;
 
         if (s != null) {
             try {
-                u = objectMapper.reader(c).readValue(s);
+                u = objectMapper.readerFor(c).readValue(s);
             } catch (Exception e) {
                 // Do nothing
             }

@@ -6,7 +6,7 @@ import one.superstack.thingstack.enums.Permission;
 import one.superstack.thingstack.enums.TargetType;
 import one.superstack.thingstack.model.Thing;
 import one.superstack.thingstack.request.CustomBusTopicAccessRequest;
-import one.superstack.thingstack.request.ThingBusTopicChangeRequest;
+import one.superstack.thingstack.request.BusTopicChangeRequest;
 import one.superstack.thingstack.request.ThingCreationRequest;
 import one.superstack.thingstack.request.ThingUpdateRequest;
 import one.superstack.thingstack.response.AccessKeyResponse;
@@ -74,9 +74,9 @@ public class ThingController extends AuthenticatedController {
     }
 
     @PutMapping(value = "/things/{thingId}/bus/topics")
-    public SuccessResponse changeAffordanceTopic(@PathVariable String thingId, @Valid @RequestBody ThingBusTopicChangeRequest thingBusTopicChangeRequest) {
+    public SuccessResponse changeAffordanceTopic(@PathVariable String thingId, @Valid @RequestBody BusTopicChangeRequest busTopicChangeRequest) {
         checkAccess(accessService, TargetType.THING, thingId, Permission.MANAGE_BUS);
-        thingService.changeAffordanceTopic(thingId, thingBusTopicChangeRequest, getOrganizationId());
+        thingService.changeAffordanceTopic(thingId, busTopicChangeRequest, getOrganizationId());
         return new SuccessResponse("Thing bus topics changed successfully");
     }
 

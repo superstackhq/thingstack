@@ -2,14 +2,14 @@ package one.superstack.thingstack.request;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
-import one.superstack.thingstack.enums.ThingBusTopicType;
+import one.superstack.thingstack.enums.TopicType;
 
 import java.io.Serializable;
 
-public class ThingBusTopicChangeRequest implements Serializable {
+public class BusTopicChangeRequest implements Serializable {
 
     @NotNull
-    private ThingBusTopicType type;
+    private TopicType type;
 
     @NotBlank
     private String key;
@@ -17,21 +17,21 @@ public class ThingBusTopicChangeRequest implements Serializable {
     @NotBlank
     private String topic;
 
-    public ThingBusTopicChangeRequest() {
+    public BusTopicChangeRequest() {
 
     }
 
-    public ThingBusTopicChangeRequest(ThingBusTopicType type, String key, String topic) {
+    public BusTopicChangeRequest(TopicType type, String key, String topic) {
         this.type = type;
         this.key = key;
         this.topic = topic;
     }
 
-    public ThingBusTopicType getType() {
+    public TopicType getType() {
         return type;
     }
 
-    public void setType(ThingBusTopicType type) {
+    public void setType(TopicType type) {
         this.type = type;
     }
 

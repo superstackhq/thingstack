@@ -1,6 +1,6 @@
 package one.superstack.thingstack.enums;
 
-public enum ThingBusTopicType {
+public enum TopicType {
 
     PROPERTY,
 

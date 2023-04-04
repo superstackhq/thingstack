@@ -165,12 +165,12 @@ public class ThingService {
         return new AccessKeyResponse(thing.getAccessKey());
     }
 
-    public void changeAffordanceTopic(String thingId, ThingBusTopicChangeRequest thingBusTopicChangeRequest, String organizationId) {
-        if (!TopicUtil.validateOrganization(thingBusTopicChangeRequest.getTopic(), organizationId)) {
+    public void changeAffordanceTopic(String thingId, BusTopicChangeRequest busTopicChangeRequest, String organizationId) {
+        if (!TopicUtil.validateOrganization(busTopicChangeRequest.getTopic(), organizationId)) {
             throw new ClientException("Topic does not belong to the same tenant");
         }
 
-        String busFieldKey = Bus.getFieldKey(thingBusTopicChangeRequest.getType(), thingBusTopicChangeRequest.getKey());
+        String busFieldKey = Bus.getFieldKey(busTopicChangeRequest.getType(), busTopicChangeRequest.getKey());
 
         Thing thing = mongoTemplate.findAndModify(Query.query(Criteria
                         .where("id").is(new ObjectId(thingId))
@@ -179,24 +179,24 @@ public class ThingService {
                 ),
                 new Update()
                         .set("modifiedOn", new Date())
-                        .set(busFieldKey, thingBusTopicChangeRequest.getTopic()),
+                        .set(busFieldKey, busTopicChangeRequest.getTopic()),
                 Thing.class);
 
         if (null == thing) {
             throw new NotFoundException("Thing bus topic not found");
         }
 
-        TopicAccess topicAccess = TopicUtil.getThingTopicAccessForTopicType(thingBusTopicChangeRequest.getType());
+        TopicAccess topicAccess = TopicUtil.getThingTopicAccessForTopicType(busTopicChangeRequest.getType());
 
         // Remove existing topic
         mqttAclService.delete(thingId, topicAccess,
-                Set.of(thing.getBus().getTopic(thingBusTopicChangeRequest.getType(), thingBusTopicChangeRequest.getKey())));
+                Set.of(thing.getBus().getTopic(busTopicChangeRequest.getType(), busTopicChangeRequest.getKey())));
 
         // Add existing topic
-        mqttAclService.add(thingId, topicAccess, Set.of(thingBusTopicChangeRequest.getTopic()));
+        mqttAclService.add(thingId, topicAccess, Set.of(busTopicChangeRequest.getTopic()));
 
         // Change the reflection topics too
-        reflectionService.changeAffordanceTopic(thingId, thingBusTopicChangeRequest);
+        reflectionService.changeAffordanceTopic(thingId, busTopicChangeRequest);
     }
 
     public void addCustomTopicAccess(String thingId, CustomBusTopicAccessRequest customBusTopicAccessRequest, String organizationId) {

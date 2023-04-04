@@ -1,6 +1,6 @@
 package one.superstack.thingstack.embedded;
 
-import one.superstack.thingstack.enums.ThingBusTopicType;
+import one.superstack.thingstack.enums.TopicType;
 import one.superstack.thingstack.enums.TopicAccess;
 import one.superstack.thingstack.exception.ClientException;
 import one.superstack.thingstack.model.Thing;
@@ -247,7 +247,7 @@ public class Bus implements Serializable {
         return validatedBus;
     }
 
-    public String getTopic(ThingBusTopicType topicType, String key) {
+    public String getTopic(TopicType topicType, String key) {
         switch (topicType) {
 
             case PROPERTY -> {
@@ -293,7 +293,7 @@ public class Bus implements Serializable {
         }
     }
 
-    public static String getFieldKey(ThingBusTopicType topicType, String affordanceKey) {
+    public static String getFieldKey(TopicType topicType, String affordanceKey) {
         String prefix;
 
         switch (topicType) {

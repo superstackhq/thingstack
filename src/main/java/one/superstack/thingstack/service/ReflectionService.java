@@ -8,7 +8,7 @@ import one.superstack.thingstack.model.Reflection;
 import one.superstack.thingstack.model.Thing;
 import one.superstack.thingstack.repository.ReflectionRepository;
 import one.superstack.thingstack.request.CustomBusTopicAccessRequest;
-import one.superstack.thingstack.request.ThingBusTopicChangeRequest;
+import one.superstack.thingstack.request.BusTopicChangeRequest;
 import one.superstack.thingstack.response.AccessKeyResponse;
 import one.superstack.thingstack.util.Random;
 import one.superstack.thingstack.util.TopicUtil;
@@ -91,8 +91,8 @@ public class ReflectionService {
         return reflection;
     }
 
-    public void changeAffordanceTopic(String thingId, ThingBusTopicChangeRequest thingBusTopicChangeRequest) {
-        String busFieldKey = Bus.getFieldKey(thingBusTopicChangeRequest.getType(), thingBusTopicChangeRequest.getKey());
+    public void changeAffordanceTopic(String thingId, BusTopicChangeRequest busTopicChangeRequest) {
+        String busFieldKey = Bus.getFieldKey(busTopicChangeRequest.getType(), busTopicChangeRequest.getKey());
 
         Reflection reflection = mongoTemplate.findAndModify(Query.query(Criteria
                         .where("thingId").is(thingId)
@@ -100,21 +100,21 @@ public class ReflectionService {
                 ),
                 new Update()
                         .set("modifiedOn", new Date())
-                        .set(busFieldKey, thingBusTopicChangeRequest.getTopic()),
+                        .set(busFieldKey, busTopicChangeRequest.getTopic()),
                 Reflection.class);
 
         if (null == reflection) {
             throw new NotFoundException("Reflection bus topic not found");
         }
 
-        TopicAccess topicAccess = TopicUtil.getReflectionTopicAccessForTopicType(thingBusTopicChangeRequest.getType());
+        TopicAccess topicAccess = TopicUtil.getReflectionTopicAccessForTopicType(busTopicChangeRequest.getType());
 
         // Remove existing topic
         mqttAclService.delete(thingId, topicAccess,
-                Set.of(reflection.getBus().getTopic(thingBusTopicChangeRequest.getType(), thingBusTopicChangeRequest.getKey())));
+                Set.of(reflection.getBus().getTopic(busTopicChangeRequest.getType(), busTopicChangeRequest.getKey())));
 
         // Add existing topic
-        mqttAclService.add(thingId, topicAccess, Set.of(thingBusTopicChangeRequest.getTopic()));
+        mqttAclService.add(thingId, topicAccess, Set.of(busTopicChangeRequest.getTopic()));
     }
 
     public void addCustomTopicAccess(String thingId, CustomBusTopicAccessRequest customBusTopicAccessRequest, String organizationId) {

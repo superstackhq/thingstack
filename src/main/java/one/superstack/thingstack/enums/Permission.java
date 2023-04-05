@@ -32,5 +32,7 @@ public enum Permission {
 
     SET_ACTION_RESULT,
 
-    EMIT_EVENT
+    EMIT_EVENT,
+
+    MESSAGE_CUSTOM_TOPIC
 }

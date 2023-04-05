@@ -8,4 +8,6 @@ import org.springframework.messaging.handler.annotation.Header;
 public interface MqttPublisherGateway {
 
     void send(@Header(MqttHeaders.TOPIC) String topic, String data);
+
+    void send(@Header(MqttHeaders.TOPIC) String topic, @Header(MqttHeaders.CORRELATION_DATA) String correlationData, String data);
 }

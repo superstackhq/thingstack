@@ -2,8 +2,6 @@ package one.superstack.thingstack.api.reflection;
 
 import jakarta.validation.Valid;
 import one.superstack.thingstack.auth.reflection.AuthenticatedReflectionController;
-import one.superstack.thingstack.enums.Permission;
-import one.superstack.thingstack.enums.TargetType;
 import one.superstack.thingstack.request.ThingBusActionInvocationRequest;
 import one.superstack.thingstack.request.ThingBusSetPropertyRequest;
 import one.superstack.thingstack.response.ThingBusActionInvocationResponse;
@@ -22,13 +20,14 @@ public class ThingBusController extends AuthenticatedReflectionController {
     public ThingBusController(ThingBusService thingBusService) {
         this.thingBusService = thingBusService;
     }
+
     @PostMapping(value = "/thing/bus/actions/{actionKey}/invoke")
-    public ThingBusActionInvocationResponse invokeAction(@PathVariable String actionKey, @Valid @RequestBody ThingBusActionInvocationRequest thingBusActionInvocationRequest) {
+    public ThingBusActionInvocationResponse invokeAction(@PathVariable String actionKey, @Valid @RequestBody ThingBusActionInvocationRequest thingBusActionInvocationRequest) throws Throwable {
         return thingBusService.invokeAction(thingBusActionInvocationRequest, actionKey, getThingId(), getOrganizationId());
     }
 
     @PutMapping(value = "/thing/bus/properties/{propertyKey}")
-    public ThingBusSetPropertyResponse setProperty(@PathVariable String propertyKey, @Valid @RequestBody ThingBusSetPropertyRequest thingBusSetPropertyRequest) {
+    public ThingBusSetPropertyResponse setProperty(@PathVariable String propertyKey, @Valid @RequestBody ThingBusSetPropertyRequest thingBusSetPropertyRequest) throws Throwable {
         return thingBusService.setProperty(thingBusSetPropertyRequest, propertyKey, getThingId(), getOrganizationId());
     }
 }

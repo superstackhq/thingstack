@@ -11,15 +11,15 @@ public class ThingBusPropertyChangeAckRequest implements Serializable {
     private String requestId;
 
     @NotNull
-    private Object data;
+    private Object value;
 
     public ThingBusPropertyChangeAckRequest() {
 
     }
 
-    public ThingBusPropertyChangeAckRequest(String requestId, Object data) {
+    public ThingBusPropertyChangeAckRequest(String requestId, Object value) {
         this.requestId = requestId;
-        this.data = data;
+        this.value = value;
     }
 
     public String getRequestId() {
@@ -30,11 +30,11 @@ public class ThingBusPropertyChangeAckRequest implements Serializable {
         this.requestId = requestId;
     }
 
-    public Object getData() {
-        return data;
+    public Object getValue() {
+        return value;
     }
 
-    public void setData(Object data) {
-        this.data = data;
+    public void setValue(Object value) {
+        this.value = value;
     }
 }

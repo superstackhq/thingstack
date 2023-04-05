@@ -26,32 +26,38 @@ public class ThingBusController extends AuthenticatedController {
     }
 
     @PutMapping(value = "/things/{thingId}/bus/properties/{propertyKey}")
-    public ThingBusSetPropertyResponse setProperty(@PathVariable String thingId, @PathVariable String propertyKey, @Valid @RequestBody ThingBusSetPropertyRequest thingBusSetPropertyRequest) {
+    public ThingBusSetPropertyResponse setProperty(@PathVariable String thingId, @PathVariable String propertyKey, @Valid @RequestBody ThingBusSetPropertyRequest thingBusSetPropertyRequest) throws Throwable {
         checkAccess(accessService, TargetType.THING, thingId, Permission.SET_PROPERTY);
         return thingBusService.setProperty(thingBusSetPropertyRequest, propertyKey, thingId, getOrganizationId());
     }
 
     @PostMapping(value = "/things/{thingId}/bus/properties/{propertyKey}/ack")
-    public ThingBusPropertyChangeAckResponse ackPropertyChange(@PathVariable String thingId, @PathVariable String propertyKey, @Valid @RequestBody ThingBusPropertyChangeAckRequest thingBusPropertyChangeAckRequest) {
+    public ThingBusPropertyChangeAckResponse ackPropertyChange(@PathVariable String thingId, @PathVariable String propertyKey, @Valid @RequestBody ThingBusPropertyChangeAckRequest thingBusPropertyChangeAckRequest) throws Throwable {
         checkAccess(accessService, TargetType.THING, thingId, Permission.ACK_PROPERTY_CHANGE);
         return thingBusService.ackPropertyChange(thingBusPropertyChangeAckRequest, propertyKey, thingId, getOrganizationId());
     }
 
     @PostMapping(value = "/things/{thingId}/bus/actions/{actionKey}/invoke")
-    public ThingBusActionInvocationResponse invokeAction(@PathVariable String thingId, @PathVariable String actionKey, @Valid @RequestBody ThingBusActionInvocationRequest thingBusActionInvocationRequest) {
+    public ThingBusActionInvocationResponse invokeAction(@PathVariable String thingId, @PathVariable String actionKey, @Valid @RequestBody ThingBusActionInvocationRequest thingBusActionInvocationRequest) throws Throwable {
         checkAccess(accessService, TargetType.THING, thingId, Permission.INVOKE_ACTION);
         return thingBusService.invokeAction(thingBusActionInvocationRequest, actionKey, thingId, getOrganizationId());
     }
 
     @PostMapping(value = "/things/{thingId}/bus/actions/{actionKey}/results")
-    public ThingBusActionResultResponse setActionResult(@PathVariable String thingId, @PathVariable String actionKey, @Valid @RequestBody ThingBusActionResultRequest thingBusActionResultRequest) {
+    public ThingBusActionResultResponse setActionResult(@PathVariable String thingId, @PathVariable String actionKey, @Valid @RequestBody ThingBusActionResultRequest thingBusActionResultRequest) throws Throwable {
         checkAccess(accessService, TargetType.THING, thingId, Permission.SET_ACTION_RESULT);
         return thingBusService.setActionResult(thingBusActionResultRequest, actionKey, thingId, getOrganizationId());
     }
 
     @PostMapping(value = "/things/{thingId}/bus/events/{eventKey}/emit")
-    public ThingBusEmitEventResponse emitEvent(@PathVariable String thingId, @PathVariable String eventKey, @Valid @RequestBody ThingBusEmitEventRequest thingBusEmitEventRequest) {
+    public ThingBusEmitEventResponse emitEvent(@PathVariable String thingId, @PathVariable String eventKey, @Valid @RequestBody ThingBusEmitEventRequest thingBusEmitEventRequest) throws Throwable {
         checkAccess(accessService, TargetType.THING, thingId, Permission.EMIT_EVENT);
         return thingBusService.emitEvent(thingBusEmitEventRequest, eventKey, thingId, getOrganizationId());
+    }
+
+    @PostMapping(value = "/things/{thingId}/bus/topics/custom/message")
+    public BusCustomTopicMessageResponse sendMessageToCustomTopic(@Valid @RequestBody BusCustomTopicMessageRequest busCustomTopicMessageRequest, @PathVariable String thingId) throws Throwable {
+        checkAccess(accessService, TargetType.THING, thingId, Permission.MESSAGE_CUSTOM_TOPIC);
+        return thingBusService.publishMessageToCustomTopic(busCustomTopicMessageRequest, thingId, getOrganizationId());
     }
 }
